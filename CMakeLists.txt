@@ -3,4 +3,4 @@ project(Gravity_Tumbler)
 
 set(CMAKE_CXX_STANDARD 11)
 
-add_executable(Gravity_Tumbler main.cpp)
+add_executable(Gravity_Tumbler main.cpp stl_overloads.h)
