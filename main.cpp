@@ -37,7 +37,7 @@ public:
 
     void tumble() {
         rollOver();
-//        simulateFall();
+        simulateFall();
     }
 
     // assumes that all the blocks have already fallen to bottom,
@@ -104,24 +104,6 @@ private:
 
 int main()
 {
-    //region mock
-    stringstream cin;
-//    cin << "17 5\n"
-//           "1\n"
-//           ".................\n"
-//           ".................\n"
-//           "...##...###..#...\n"
-//           ".####..#####.###.\n"
-//           "#################";
-    cin << "3 3\n"
-           "1\n"
-           ".#.\n"
-           ".#.\n"
-           ".##\n";
-    //endregion
-
-    //region input
-
     int columns;
     int rows;
     cin >> columns >> rows; cin.ignore();
@@ -143,9 +125,13 @@ int main()
     //endregion
 
     Landscape landscape(row_block_counts, col_block_counts);
-    vector<vector<char>> landscape_char_grid(rows, vector<char>(columns, '%'));
 
-    landscape.tumble();
+    for (int i = 0; i < tumblings_count; ++i) {
+        landscape.tumble();
+    }
+
+    vector<vector<char>> landscape_char_grid(landscape.rows(),
+                                             vector<char>(landscape.columns(), '%'));
 
     landscape.toGrid(landscape_char_grid);
 
