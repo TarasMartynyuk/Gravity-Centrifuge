@@ -11,19 +11,63 @@
 
 using namespace std;
 
-class Landscape {
-public:
-    Landscape(vector<int>* row_block_counts,
-              vector<int>* col_block_counts)
-        : row_block_counts(row_block_counts),
-        col_block_counts(col_block_counts)
-    { assert(columnsRowsHaveEqualBlocksCount()); }
+struct Landscape {
+    // row : # blocks in that row
+    vector<int>* row_block_counts;
+    // col : # blocks in that col
+    vector<int>* col_block_counts;
 
-    void tumble() {
-        rollOver();
-        simulateFall();
+    int rows() { return row_block_counts->size(); }
+    int columns() { return col_block_counts->size(); }
+
+    // updates row blocks counts to simulate blocks falling to the bottom
+    void simulateFall() {
+        for (int i = rows() - 1; i >= 0; --i) {
+            // how much blocks must the column have
+            // so that when they fall a block will be placed in the ith row
+            int thresh = rows() - i;
+            int row_blocks = countColumnsWithNotLessBlocksThan(thresh, landscapeState);
+            row_block_counts->at(i) = row_blocks;
+        }
+        assert(columnsRowsHaveEqualBlocksCount());
     }
 
+    // rolls by 90 deg counter clockwise
+    void rollOver() {
+        auto* temp = col_block_counts;
+        col_block_counts = row_block_counts;
+
+        row_block_counts = new vector<int>(temp->size());
+        for (int i = 0; i < temp->size(); ++i) {
+            int reverse = temp->size() - 1 - i;
+            row_block_counts->at(reverse) = temp->at(i);
+        }
+    }
+
+    int countColumnsWithNotLessBlocksThan(int thresh) {
+        return count_if(col_block_counts->begin(), col_block_counts->end(),
+                        [thresh](int blocks) {
+                            return blocks >= thresh;
+                        });
+    }
+
+    bool columnsRowsHaveEqualBlocksCount() {
+        return accumulate(row_block_counts->begin(), row_block_counts->end(), int()) ==
+               accumulate(col_block_counts->begin(), col_block_counts->end(), int());
+    }
+};
+
+class LandscapeTumbler {
+public:
+    LandscapeTumbler(Landscape init_landscape) : init_landscape(init_landscape)
+    { assert(init_landscape.columnsRowsHaveEqualBlocksCount()); }
+
+    void tumble(int times) {
+//        rollOver();
+//        simulateFall();
+    }
+
+    // outputs the current landscape to grid
     // assumes that all the blocks have already fallen to bottom,
     // thus ignores the row_block_counts values
     void toGrid(vector<vector<char>> & grid) {
@@ -43,46 +87,12 @@ public:
         }
     }
 
-    int rows() { return row_block_counts->size(); }
-    int columns() { return col_block_counts->size(); }
+//    int rows() { return row_block_counts->size(); }
+//    int columns() { return col_block_counts->size(); }
 private:
-    // row : # blocks in that row
-    vector<int>* row_block_counts;
-    // col : # blocks in that col
-    vector<int>* col_block_counts;
-
-    // updates row blocks counts to simulate blocks falling to the bottom
-    void simulateFall() {
-        for (int i = rows() - 1; i >= 0; --i) {
-            // how much blocks must the column have
-            // so that when they fall a block will be placed in the ith row
-            int thresh = rows() - i;
-            int row_blocks = countColumnsWithNotLessBlocksThan(thresh);
-            row_block_counts->at(i) = row_blocks;
-        }
-        assert(columnsRowsHaveEqualBlocksCount());
-    }
-    // rolls by 90 deg counter clockwise
-    void rollOver() {
-        auto* temp = col_block_counts;
-        col_block_counts = row_block_counts;
-
-        row_block_counts = new vector<int>(temp->size());
-        for (int i = 0; i < temp->size(); ++i) {
-            int reverse = temp->size() - 1 - i;
-            row_block_counts->at(reverse) = temp->at(i);
-        }
-    }
-
-    int countColumnsWithNotLessBlocksThan(int thresh) {
-        return count_if(col_block_counts->begin(), col_block_counts->end(), [thresh](int blocks) {
-            return blocks >= thresh;
-        });
-    }
-    bool columnsRowsHaveEqualBlocksCount() {
-        return accumulate(row_block_counts->begin(), row_block_counts->end(), int()) ==
-               accumulate(col_block_counts->begin(), col_block_counts->end(), int());
-    }
+    Landscape init_landscape;
+    Landscape odd_state;
+    Landscape even_state;
 };
 
 class CentrifugeSimulator {
@@ -205,7 +215,7 @@ int main()
     }
     //endregion
 
-    Landscape landscape(row_block_counts, col_block_counts);
+    LandscapeTumbler landscape(row_block_counts, col_block_counts);
 
     long tumblings_count = getNetTumblingsCount(centrifuge_command);
 
