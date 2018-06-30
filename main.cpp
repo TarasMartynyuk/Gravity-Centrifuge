@@ -7,25 +7,9 @@
 #include <cassert>
 #include <sstream>
 #include <iterator>
+#include <bitset>
 
 using namespace std;
-
-template<class TInputContainer, class OIter>
-OIter copy(const TInputContainer& container, OIter out_it) {
-    return std::copy(container.begin(), container.end(), out_it);
-};
-
-// default parameter is only for numerical types
-// init value is needed to deduce TElem
-template<typename TElem, class TContainer>
-TElem sum(const TContainer& container, TElem init_value) {
-    return std::accumulate(container.begin(), container.end(), init_value);
-};
-
-template<typename TContainer, class TPred>
-bool all_of(const TContainer& container, TPred pred) {
-    return all_of(container.begin(), container.end(), pred);
-};
 
 class Landscape {
 public:
@@ -44,7 +28,7 @@ public:
     // thus ignores the row_block_counts values
     void toGrid(vector<vector<char>> & grid) {
         assert(grid.size() >= rows());
-        assert(all_of(grid, [this](const vector<char>& row) {
+        assert(all_of(grid.begin(), grid.end(), [this](const vector<char>& row) {
                         return row.size() == columns();
         }));
 
@@ -96,18 +80,60 @@ private:
         });
     }
     bool columnsRowsHaveEqualBlocksCount() {
-        int row_sum = sum(*row_block_counts, int());
-        int col_sum = sum(*col_block_counts, int());
-        return sum(*row_block_counts, int()) == sum(*col_block_counts, int());
+        return accumulate(row_block_counts->begin(), row_block_counts->end(), int()) ==
+               accumulate(col_block_counts->begin(), col_block_counts->end(), int());
     }
 };
+
+class CentrifugeSimulator {
+    long total_tumbles = 0;
+    int drive_a_momentum = 1;
+    int drive_b_momentum = 1;
+
+    const int bits_per_command_portion = 54;
+
+    // interprets the 18 (max even number of full 3-bit pairs that fits into long - one for each oct digit)
+    // lowest bits of six_bit_command
+    // as a series of commands to centrifuge's drives
+    // one command is 2 bits - first for drive A, second for drive B
+    void feed6BytesCommandPortion(long commands_portion_number) {
+        assert(hasNoMoreLowestBitsThanCommandPortion(commands_portion_number));
+        bitset<18> command_portion(commands_portion_number);
+    }
+
+    void simulateDoubleCommand(bool driveACommand, bool driveBCommand) {
+
+    };
+
+    // true if the numbers highest set bit is not out of bounds of what
+    // a number with bits_per_command_portion bits can represent
+    bool hasNoMoreLowestBitsThanCommandPortion(unsigned long number) {
+        bitset<54> bits_54;
+        bits_54.set(0);
+        cerr << bits_54 << endl;
+        return bits_54.to_ulong() > number;
+    }
+};
+
+int getNetTumblingsCount(const string& centrifuge_command) {
+    const int oct_digits_in_command_portion = 6;
+    CentrifugeSimulator centrifuge;
+    if(centrifuge_command.length() <= oct_digits_in_command_portion) {
+//        long long
+    }
+
+    for (int i = 0; i < 2; ++i) {
+        auto three_ocd_digits =  centrifuge_command.substr();
+    }
+}
 
 int main()
 {
     int columns;
     int rows;
     cin >> columns >> rows; cin.ignore();
-    int tumblings_count; cin >> tumblings_count; cin.ignore();
+    string centrifuge_command; getline(cin, centrifuge_command);
+    int tumblings_count = getNetTumblingsCount(centrifuge_command);
 
     auto* row_block_counts = new vector<int>(rows, 0);
     auto* col_block_counts = new vector<int>(columns, 0);
@@ -137,7 +163,7 @@ int main()
 
     ostream_iterator<char> os_it(cout, "");
     for(auto& row : landscape_char_grid) {
-        copy(row, os_it);
+        copy(row.begin(), row.end(), os_it);
         cout << "\n";
     }
 }
